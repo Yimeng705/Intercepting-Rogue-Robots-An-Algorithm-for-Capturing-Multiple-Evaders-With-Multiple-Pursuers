@@ -1,0 +1,38 @@
+function [A] = getVoronoiAdjacency(p)
+    n = length(p);
+    A = zeros(n);
+    tol = 1e-6;
+    
+    % 预提取顶点
+    vertexList = arrayfun(@(x) x.V, p, 'UniformOutput', false);
+    
+    for i = 1:n
+        for j = i+1:n
+            if areAdjacent(vertexList{i}, vertexList{j}, tol)
+                A(i,j) = 1;
+                A(j,i) = 1;
+            end
+        end
+    end
+end
+
+function adjacent = areAdjacent(v1, v2, tol)
+    dim = size(v1, 2);
+    inf1 = all(isinf(v1), 2); 
+    inf2 = all(isinf(v2), 2);
+    
+    % 统计共享无穷远点
+    infShared = sum(inf1) > 0 && sum(inf2) > 0;
+    
+    % 有限顶点比较
+    valid1 = v1(~inf1, :);
+    valid2 = v2(~inf2, :);
+    if isempty(valid1) || isempty(valid2)
+        finiteShared = 0;
+    else
+        dists = pdist2(valid1, valid2);
+        finiteShared = sum(dists < tol, 'all');
+    end
+    
+    adjacent = (infShared + finiteShared) >= dim;
+end
